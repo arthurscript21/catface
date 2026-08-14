@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>catface</title>
+  <link rel="stylesheet" href="../css/v1.css" />
+</head>
+<body>
+  <h1>🐱 catface</h1>
+  <p class="sub">Detección de mano en vivo con la cámara.</p>
+
+  <div class="stage">
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="overlay"></canvas>
+    <div class="status" id="status">iniciando cámara…</div>
+  </div>
+
+  <!-- MediaPipe Hands: el navegador la descarga sola desde este CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="../js/camara.js"></script>
+</body>
+</html>
