@@ -53,6 +53,44 @@ memeHandsUpImg.onload = () => {
 memeFistImg.src = '../image/memegato1.jpg';
 memeHandsUpImg.src = '../image/memegato2.jpg';
 
+const memeThumbsUpImg = new Image();
+const memeMiddleFingerImg = new Image();
+
+memeThumbsUpImg.onload = () => {
+  if (memeEl.classList.contains('visible-thumbs-up')) {
+    memeEl.src = memeThumbsUpImg.src;
+  }
+};
+
+memeMiddleFingerImg.onload = () => {
+  if (memeEl.classList.contains('visible-middle-finger')) {
+    memeEl.src = memeMiddleFingerImg.src;
+  }
+};
+
+memeThumbsUpImg.src = '../image/memegato3.jpg';
+memeMiddleFingerImg.src = '../image/memegato4.jpg';
+
+const memeIndexFingersImg = new Image();
+
+memeIndexFingersImg.onload = () => {
+  if (memeEl.classList.contains('visible-index-fingers')) {
+    memeEl.src = memeIndexFingersImg.src;
+  }
+};
+
+memeIndexFingersImg.src = '../image/memegato5.jpg';
+
+const memePointingImg = new Image();
+
+memePointingImg.onload = () => {
+  if (memeEl.classList.contains('visible-pointing')) {
+    memeEl.src = memePointingImg.src;
+  }
+};
+
+memePointingImg.src = '../image/memegato7.jpg';
+
 // Distancia entre dos landmarks (en coordenadas normalizadas 0–1)
 function dist(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
@@ -83,6 +121,109 @@ function isFist(landmarks) {
   });
 
   return thumbClosed && todosLosDedosDobgados;
+}
+
+// Pulgar arriba: los otros 4 dedos doblados (igual que en isFist)
+// pero el pulgar extendido y apuntando hacia arriba.
+function isThumbsUp(landmarks) {
+  const wrist = landmarks[0];
+  const palmCenter = landmarks[9];
+
+  const dedos = [
+    { tip: 8, mcp: 5 },
+    { tip: 12, mcp: 9 },
+    { tip: 16, mcp: 13 },
+    { tip: 20, mcp: 17 }
+  ];
+
+  const todosLosDedosDobgados = dedos.every(({ tip, mcp }) => {
+    const tipToWrist = dist(landmarks[tip], wrist);
+    const mcpToWrist = dist(landmarks[mcp], wrist);
+    const tipToPalm = dist(landmarks[tip], palmCenter);
+    return tipToWrist < mcpToWrist * 1.1 && tipToPalm < 0.28;
+  });
+
+  const thumbTip = landmarks[4];
+  const thumbBase = landmarks[2];
+
+  // el pulgar extendido (lejos de la muñeca, no metido como en el puño)
+  const thumbExtended = dist(thumbTip, wrist) > dist(thumbBase, wrist) * 1.2;
+
+  // y apuntando hacia arriba: su punta más "arriba" que su base
+  // (en coordenadas de imagen, Y crece hacia abajo, por eso el <)
+  const thumbPointingUp = thumbTip.y < thumbBase.y - 0.05;
+
+  return todosLosDedosDobgados && thumbExtended && thumbPointingUp;
+}
+
+// Dedo medio solo: índice, anular y meñique doblados, medio extendido.
+// No exigimos nada del pulgar porque en este gesto varía mucho de persona a persona.
+function isMiddleFingerUp(landmarks) {
+  const wrist = landmarks[0];
+  const palmCenter = landmarks[9];
+
+  const otrosDedos = [
+    { tip: 8, mcp: 5 },   // índice
+    { tip: 16, mcp: 13 }, // anular
+    { tip: 20, mcp: 17 }  // meñique
+  ];
+
+  const otrosDoblados = otrosDedos.every(({ tip, mcp }) => {
+    const tipToWrist = dist(landmarks[tip], wrist);
+    const mcpToWrist = dist(landmarks[mcp], wrist);
+    const tipToPalm = dist(landmarks[tip], palmCenter);
+    return tipToWrist < mcpToWrist * 1.1 && tipToPalm < 0.28;
+  });
+
+  const middleTip = landmarks[12];
+  const middleMcp = landmarks[9];
+  const middleExtended = dist(middleTip, wrist) > dist(middleMcp, wrist) * 1.3;
+
+  return otrosDoblados && middleExtended;
+}
+
+// Detecta cuando los dos dedos índices de ambas manos se juntan
+function isIndexFingersJoined(handLandmarks) {
+  if (!handLandmarks || handLandmarks.length < 2) return false;
+
+  const indexTips = handLandmarks.map(landmarks => landmarks[8]); // punto 8 es la punta del índice
+  
+  if (indexTips.length < 2) return false;
+  
+  // Calcula la distancia entre las puntas de los dos índices
+  const indexDistance = dist(indexTips[0], indexTips[1]);
+  
+  // Si están a menos de 0.08 unidades de distancia (normalizadas), están juntos
+  return indexDistance < 0.08;
+}
+
+// Detecta cuando el dedo índice está extendido apuntando (hacia la cámara)
+// y los otros dedos están doblados
+function isIndexPointingForward(landmarks) {
+  const wrist = landmarks[0];
+  const palmCenter = landmarks[9];
+
+  // Dedos que deben estar doblados: pulgar, medio, anular, meñique
+  const otrosDedos = [
+    { tip: 4, mcp: 2 },   // pulgar
+    { tip: 12, mcp: 9 },  // medio
+    { tip: 16, mcp: 13 }, // anular
+    { tip: 20, mcp: 17 }  // meñique
+  ];
+
+  const otrosDoblados = otrosDedos.every(({ tip, mcp }) => {
+    const tipToWrist = dist(landmarks[tip], wrist);
+    const mcpToWrist = dist(landmarks[mcp], wrist);
+    const tipToPalm = dist(landmarks[tip], palmCenter);
+    return tipToWrist < mcpToWrist * 1.1 && tipToPalm < 0.28;
+  });
+
+  // Índice extendido
+  const indexTip = landmarks[8];
+  const indexMcp = landmarks[5];
+  const indexExtended = dist(indexTip, wrist) > dist(indexMcp, wrist) * 1.3;
+
+  return otrosDoblados && indexExtended;
 }
 
 // Detecta dos manos con la palma abierta a los lados de la cabeza,
@@ -144,7 +285,11 @@ function onResults(results) {
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
   let fistDetected = false;
+  let thumbsUpDetected = false;
+  let middleFingerDetected = false;
   let openPalmsHeadDetected = false;
+  let indexFingersJoined = false;
+  let indexPointingForward = false;
 
   if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
     statusEl.textContent = 'mano detectada';
@@ -172,22 +317,50 @@ function onResults(results) {
       if (isFist(landmarks)) {
         fistDetected = true;
       }
+      if (isThumbsUp(landmarks)) {
+        thumbsUpDetected = true;
+      }
+      if (isMiddleFingerUp(landmarks)) {
+        middleFingerDetected = true;
+      }
+      if (isIndexPointingForward(landmarks)) {
+        indexPointingForward = true;
+      }
     }
 
     openPalmsHeadDetected = isOpenPalmsNearHead(results.multiHandLandmarks);
+    indexFingersJoined = isIndexFingersJoined(results.multiHandLandmarks);
 
-    memeEl.classList.remove('visible', 'visible-fist', 'visible-hands-up');
+    memeEl.classList.remove(
+      'visible', 'visible-fist', 'visible-hands-up',
+      'visible-thumbs-up', 'visible-middle-finger', 'visible-index-fingers', 'visible-pointing'
+    );
 
     if (fistDetected) {
       memeEl.classList.add('visible', 'visible-fist');
       memeEl.src = memeFistImg.src;
+    } else if (thumbsUpDetected) {
+      memeEl.classList.add('visible', 'visible-thumbs-up');
+      memeEl.src = memeThumbsUpImg.src;
+    } else if (middleFingerDetected) {
+      memeEl.classList.add('visible', 'visible-middle-finger');
+      memeEl.src = memeMiddleFingerImg.src;
+    } else if (indexFingersJoined) {
+      memeEl.classList.add('visible', 'visible-index-fingers');
+      memeEl.src = memeIndexFingersImg.src;
+    } else if (indexPointingForward) {
+      memeEl.classList.add('visible', 'visible-pointing');
+      memeEl.src = memePointingImg.src;
     } else if (openPalmsHeadDetected) {
       memeEl.classList.add('visible', 'visible-hands-up');
       memeEl.src = memeHandsUpImg.src;
     }
   } else {
     statusEl.textContent = 'buscando mano…';
-    memeEl.classList.remove('visible', 'visible-fist', 'visible-hands-up');
+    memeEl.classList.remove(
+      'visible', 'visible-fist', 'visible-hands-up',
+      'visible-thumbs-up', 'visible-middle-finger', 'visible-index-fingers', 'visible-pointing'
+    );
     memeEl.src = '';
   }
 }
