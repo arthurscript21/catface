@@ -7,13 +7,19 @@
   <link rel="stylesheet" href="../css/v1.css" />
 </head>
 <body>
-  <h1>🐱 catface</h1>
-  <p class="sub">Detección de mano en vivo con la cámara.</p>
+  <h1>🐱</h1>
+  <p class="sub">no me mandes mas ideas que me dan ganas</p>
 
-  <div class="stage">
-    <video id="video" playsinline autoplay muted></video>
-    <canvas id="overlay"></canvas>
-    <div class="status" id="status">iniciando cámara…</div>
+  <div class="layout">
+    <div class="stage">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="overlay"></canvas>
+      <div class="status" id="status">iniciando cámara…</div>
+    </div>
+
+    <div class="meme-panel" id="meme-panel">
+      <img id="meme" alt="meme del gato" />
+    </div>
   </div>
 
   <!-- MediaPipe Hands: el navegador la descarga sola desde este CDN -->

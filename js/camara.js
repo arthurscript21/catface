@@ -4,6 +4,7 @@ const canvasEl = document.getElementById('overlay');
 const ctx = canvasEl.getContext('2d');
 const statusEl = document.getElementById('status');
 const stageEl = document.querySelector('.stage');
+const memeEl = document.getElementById('meme');
 
 function resizeCanvas() {
   canvasEl.width = videoEl.clientWidth;
@@ -33,33 +34,97 @@ function fitStage() {
 videoEl.addEventListener('loadedmetadata', fitStage);
 window.addEventListener('resize', fitStage);
 
-// ---- Imagen que aparece cuando detectamos un puño ----
-const memeImg = new Image();
-memeImg.src = '../image/memegato1.jpg';
+// ---- Imagenes para cada gesto ----
+const memeFistImg = new Image();
+const memeHandsUpImg = new Image();
+
+memeFistImg.onload = () => {
+  if (memeEl.classList.contains('visible-fist')) {
+    memeEl.src = memeFistImg.src;
+  }
+};
+
+memeHandsUpImg.onload = () => {
+  if (memeEl.classList.contains('visible-hands-up')) {
+    memeEl.src = memeHandsUpImg.src;
+  }
+};
+
+memeFistImg.src = '../image/memegato1.jpg';
+memeHandsUpImg.src = '../image/memegato2.jpg';
 
 // Distancia entre dos landmarks (en coordenadas normalizadas 0–1)
 function dist(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-// Heurística simple de "puño cerrado": si la punta de cada dedo está
-// más cerca de la muñeca que su nudillo base, ese dedo está doblado.
-// Con al menos 3 de los 4 dedos doblados, lo contamos como puño.
+// Heurística flexible de "puño cerrado": sigue exigiendo que los 4 dedos
+// estén doblados, pero con un margen más suave para que no sea tan rígida.
+// Si solo se dobla 3 dedos, no lo cuenta como puño completo.
 function isFist(landmarks) {
   const wrist = landmarks[0];
+  const palmCenter = landmarks[9];
+
   const dedos = [
     { tip: 8, mcp: 5 },   // índice
     { tip: 12, mcp: 9 },  // medio
     { tip: 16, mcp: 13 }, // anular
     { tip: 20, mcp: 17 }  // meñique
   ];
-  let dobladosCount = 0;
-  for (const d of dedos) {
-    if (dist(landmarks[d.tip], wrist) < dist(landmarks[d.mcp], wrist)) {
-      dobladosCount++;
-    }
-  }
-  return dobladosCount >= 3;
+
+  const thumbClosed = dist(landmarks[4], wrist) < dist(landmarks[2], wrist) * 1.05;
+
+  const todosLosDedosDobgados = dedos.every(({ tip, mcp }) => {
+    const tipToWrist = dist(landmarks[tip], wrist);
+    const mcpToWrist = dist(landmarks[mcp], wrist);
+    const tipToPalm = dist(landmarks[tip], palmCenter);
+
+    return tipToWrist < mcpToWrist * 1.1 && tipToPalm < 0.28;
+  });
+
+  return thumbClosed && todosLosDedosDobgados;
+}
+
+// Detecta dos manos con la palma abierta a los lados de la cabeza,
+// como en tu referencia: una mano a la izquierda y otra a la derecha,
+// con los dedos extendidos y la palma en altura media/alta.
+function isOpenPalmsNearHead(handLandmarks) {
+  if (!handLandmarks || handLandmarks.length < 2) return false;
+
+  const openHands = handLandmarks.filter((landmarks) => {
+    const wrist = landmarks[0];
+    const palmCenter = landmarks[9];
+    const dedos = [
+      { tip: 8, mcp: 5 },
+      { tip: 12, mcp: 9 },
+      { tip: 16, mcp: 13 },
+      { tip: 20, mcp: 17 }
+    ];
+
+    const dedosAbiertos = dedos.filter(({ tip, mcp }) => {
+      const tipToWrist = dist(landmarks[tip], wrist);
+      const mcpToWrist = dist(landmarks[mcp], wrist);
+      return tipToWrist > mcpToWrist * 1.18;
+    }).length;
+
+    const palmOpen = dedosAbiertos >= 3;
+    const bodyHeight = palmCenter.y > 0.08 && palmCenter.y < 0.7;
+    const sideOfHead = palmCenter.x < 0.38 || palmCenter.x > 0.62;
+
+    return palmOpen && bodyHeight && sideOfHead;
+  });
+
+  if (openHands.length < 2) return false;
+
+  const leftHand = openHands.reduce((min, hand) => hand[9].x < min[9].x ? hand : min, openHands[0]);
+  const rightHand = openHands.reduce((max, hand) => hand[9].x > max[9].x ? hand : max, openHands[0]);
+
+  const separation = Math.abs(leftHand[9].x - rightHand[9].x);
+  const verticalMatch = Math.abs(leftHand[9].y - rightHand[9].y) < 0.25;
+  const leftIsLeft = leftHand[9].x < 0.45;
+  const rightIsRight = rightHand[9].x > 0.55;
+
+  return separation > 0.22 && verticalMatch && leftIsLeft && rightIsRight;
 }
 
 // Los 21 puntos que detecta MediaPipe en una mano, y qué puntos
@@ -77,6 +142,9 @@ const HAND_CONNECTIONS = [
 function onResults(results) {
   resizeCanvas();
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+  let fistDetected = false;
+  let openPalmsHeadDetected = false;
 
   if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
     statusEl.textContent = 'mano detectada';
@@ -101,28 +169,26 @@ function onResults(results) {
         ctx.fill();
       }
 
-      // si la mano está en forma de puño, dibuja la imagen al lado
-      if (isFist(landmarks) && memeImg.complete) {
-        const centro = landmarks[9]; // aprox. centro de la palma
-        const cx = centro.x * canvasEl.width;
-        const cy = centro.y * canvasEl.height;
-
-        const memeSize = canvasEl.width * 0.3;
-        const offsetX = memeSize * 0.9; // qué tan "al lado" aparece
-
-        ctx.save();
-        // usamos -offsetX porque el canvas está espejado por CSS:
-        // así la imagen aparece a la DERECHA de tu puño tal como
-        // TÚ lo ves en pantalla. Si prefieres que salga a la
-        // izquierda, cambia el signo a +offsetX.
-        ctx.translate(cx - offsetX, cy);
-        ctx.scale(-1, 1); // des-espeja el dibujo (si no, saldría al revés)
-        ctx.drawImage(memeImg, -memeSize / 2, -memeSize / 2, memeSize, memeSize);
-        ctx.restore();
+      if (isFist(landmarks)) {
+        fistDetected = true;
       }
+    }
+
+    openPalmsHeadDetected = isOpenPalmsNearHead(results.multiHandLandmarks);
+
+    memeEl.classList.remove('visible', 'visible-fist', 'visible-hands-up');
+
+    if (fistDetected) {
+      memeEl.classList.add('visible', 'visible-fist');
+      memeEl.src = memeFistImg.src;
+    } else if (openPalmsHeadDetected) {
+      memeEl.classList.add('visible', 'visible-hands-up');
+      memeEl.src = memeHandsUpImg.src;
     }
   } else {
     statusEl.textContent = 'buscando mano…';
+    memeEl.classList.remove('visible', 'visible-fist', 'visible-hands-up');
+    memeEl.src = '';
   }
 }
 

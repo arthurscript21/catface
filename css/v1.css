@@ -22,6 +22,15 @@ body{
 h1{ margin:4px 0 2px; font-size: clamp(1.1rem, 4vw, 1.6rem); }
 p.sub{ color: var(--muted); margin:0 0 20px; font-size: clamp(0.75rem, 2.2vw, 0.9rem); }
 
+.layout{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  width:100%;
+  flex-wrap:wrap;
+}
+
 /* Ya no fijamos ancho/alto/aspect-ratio aquí: el tamaño real
    lo calcula camara.js según la proporción de TU cámara y el
    espacio disponible en pantalla (ver fitStage() en camara.js) */
@@ -30,6 +39,7 @@ p.sub{ color: var(--muted); margin:0 0 20px; font-size: clamp(0.75rem, 2.2vw, 0.
   border-radius:16px;
   overflow:hidden;
   background:#000;
+  box-shadow:0 12px 30px rgba(0,0,0,0.25);
 }
 
 video, canvas{
@@ -40,6 +50,33 @@ video, canvas{
 }
 
 #overlay{ pointer-events:none; }
+
+.meme-panel{
+  width:min(260px, 28vw);
+  min-width:180px;
+  aspect-ratio:1;
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#meme{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0;
+  transform:scale(0.9);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#meme.visible{
+  opacity:1;
+  transform:scale(1);
+}
 
 .status{
   position:absolute; top:10px; left:10px;
