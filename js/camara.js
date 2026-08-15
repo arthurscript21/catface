@@ -50,8 +50,8 @@ memeHandsUpImg.onload = () => {
   }
 };
 
-memeFistImg.src = '../image/memegato1.jpg';
-memeHandsUpImg.src = '../image/memegato2.jpg';
+memeFistImg.src = 'image/memegato1.jpg';
+memeHandsUpImg.src = 'image/memegato2.jpg';
 
 const memeThumbsUpImg = new Image();
 const memeMiddleFingerImg = new Image();
@@ -68,8 +68,8 @@ memeMiddleFingerImg.onload = () => {
   }
 };
 
-memeThumbsUpImg.src = '../image/memegato3.jpg';
-memeMiddleFingerImg.src = '../image/memegato4.jpg';
+memeThumbsUpImg.src = 'image/memegato3.jpg';
+memeMiddleFingerImg.src = 'image/memegato4.jpg';
 
 const memeIndexFingersImg = new Image();
 
@@ -79,7 +79,7 @@ memeIndexFingersImg.onload = () => {
   }
 };
 
-memeIndexFingersImg.src = '../image/memegato5.jpg';
+memeIndexFingersImg.src = 'image/memegato5.jpg';
 
 const memePointingImg = new Image();
 
@@ -89,7 +89,7 @@ memePointingImg.onload = () => {
   }
 };
 
-memePointingImg.src = '../image/memegato7.jpg';
+memePointingImg.src = 'image/memegato7.jpg';
 
 // Distancia entre dos landmarks (en coordenadas normalizadas 0–1)
 function dist(a, b) {
