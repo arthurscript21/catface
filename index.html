@@ -3,26 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="catface - detecta gestos de la mano y muestra memes de gato" />
   <title>catface</title>
   <link rel="stylesheet" href="css/v1.css" />
 </head>
 <body>
-  <h1>🐱</h1>
-  <p class="sub">no me mandes mas ideas que me dan ganas</p>
+
+  <header class="header">
+    <h1>catface</h1>
+    <p class="sub">detecta tus gestos y muestra memes de gato</p>
+  </header>
 
   <div class="layout">
     <div class="stage">
       <video id="video" playsinline autoplay muted></video>
       <canvas id="overlay"></canvas>
-      <div class="status" id="status">iniciando cámara…</div>
+      <div class="status" id="status">iniciando camara...</div>
+      <div class="gesture-label" id="gesture-label"></div>
     </div>
 
     <div class="meme-panel" id="meme-panel">
       <img id="meme" alt="meme del gato" />
+      <div class="meme-placeholder" id="meme-placeholder">
+        <span class="meme-placeholder-icon">?</span>
+        <span>mostrara un meme cuando detecte un gesto</span>
+      </div>
     </div>
   </div>
 
-  <!-- MediaPipe Hands: el navegador la descarga sola desde este CDN -->
+  <div class="gesture-guide">
+    <h2>guia de gestos</h2>
+    <ul class="gesture-list">
+      <li class="gesture-item" data-gesture="fist">
+        <span class="gesture-emoji">?</span>
+        <span class="gesture-name">punho</span>
+      </li>
+      <li class="gesture-item" data-gesture="thumbs-up">
+        <span class="gesture-emoji">👍</span>
+        <span class="gesture-name">pulgar arriba</span>
+      </li>
+      <li class="gesture-item" data-gesture="middle-finger">
+        <span class="gesture-emoji">🖕</span>
+        <span class="gesture-name">dedo medio</span>
+      </li>
+      <li class="gesture-item" data-gesture="index-fingers">
+        <span class="gesture-emoji">? ?</span>
+        <span class="gesture-name">indices juntos</span>
+      </li>
+      <li class="gesture-item" data-gesture="pointing">
+        <span class="gesture-emoji">👉</span>
+        <span class="gesture-name">apuntando</span>
+      </li>
+      <li class="gesture-item" data-gesture="hands-up">
+        <span class="gesture-emoji">? ?</span>
+        <span class="gesture-name">manos arriba</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p>cargando modelo de deteccion...</p>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="js/camara.js"></script>

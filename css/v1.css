@@ -1,85 +1,319 @@
-:root{
-  --bg: #0d0d0d;
-  --panel: #171717;
+:root {
+  --bg: #0a0a0f;
+  --bg-secondary: #12121a;
+  --panel: #1a1a24;
   --accent: #39ff6a;
-  --text: #f2f2f2;
-  --muted: #9a9a9a;
+  --accent-dim: rgba(57, 255, 106, 0.15);
+  --accent-glow: rgba(57, 255, 106, 0.3);
+  --text: #f0f0f0;
+  --text-dim: #7a7a8a;
+  --border: rgba(255, 255, 255, 0.06);
+  --radius: 14px;
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-*{ box-sizing: border-box; }
 
-body{
-  margin:0;
-  min-height:100vh;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, sans-serif;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding: 24px 16px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px;
+  overflow-x: hidden;
 }
 
-h1{ margin:4px 0 2px; font-size: clamp(1.1rem, 4vw, 1.6rem); }
-p.sub{ color: var(--muted); margin:0 0 20px; font-size: clamp(0.75rem, 2.2vw, 0.9rem); }
-
-.layout{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:20px;
-  width:100%;
-  flex-wrap:wrap;
+/* ---- header ---- */
+.header {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-/* Ya no fijamos ancho/alto/aspect-ratio aquí: el tamaño real
-   lo calcula camara.js según la proporción de TU cámara y el
-   espacio disponible en pantalla (ver fitStage() en camara.js) */
-.stage{
-  position:relative;
-  border-radius:16px;
-  overflow:hidden;
-  background:#000;
-  box-shadow:0 12px 30px rgba(0,0,0,0.25);
+.header h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--accent), #6dffca);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-video, canvas{
-  position:absolute; top:0; left:0;
-  width:100%; height:100%;
-  object-fit: contain; /* muestra el frame completo, sin recortar */
-  transform: scaleX(-1) scale(0.85); /* espejo + un poco de "alejado" */
+.sub {
+  color: var(--text-dim);
+  margin: 4px 0 0;
+  font-size: clamp(0.75rem, 2vw, 0.9rem);
 }
 
-#overlay{ pointer-events:none; }
-
-.meme-panel{
-  width:min(260px, 28vw);
-  min-width:180px;
-  aspect-ratio:1;
-  border-radius:16px;
-  overflow:hidden;
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.08);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+/* ---- layout ---- */
+.layout {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 1400px;
+  height: calc(100vh - 120px);
 }
 
-#meme{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  opacity:0;
-  transform:scale(0.9);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+/* ---- meme panel ---- */
+.meme-panel {
+  position: relative;
+  width: min(280px, 25vw);
+  min-width: 180px;
+  aspect-ratio: 1;
+  align-self: center;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--panel);
+  flex-shrink: 0;
 }
 
-#meme.visible{
-  opacity:1;
-  transform:scale(1);
+/* ---- stage (camara + canvas) ---- */
+.stage {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border);
+  transition: box-shadow var(--transition);
 }
 
-.status{
-  position:absolute; top:10px; left:10px;
-  font-size:0.7rem; padding:4px 10px; border-radius:999px;
-  background:rgba(0,0,0,0.5); color: var(--accent);
+.stage.active {
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 2px var(--accent),
+    0 0 30px var(--accent-dim);
+}
+
+video, canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  transform: scaleX(-1) scale(0.85);
+}
+
+#overlay { pointer-events: none; }
+
+/* ---- status badge ---- */
+.status {
+  position: absolute;
+  top: 10px; left: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  transition: all var(--transition);
+}
+
+.status.error {
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.2);
+}
+
+/* ---- gesture label (sobre el video) ---- */
+.gesture-label {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.gesture-label.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---- responsive ---- */
+@media (max-width: 700px) {
+  .layout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .meme-panel {
+    width: 200px;
+    min-width: 0;
+  }
+
+  .gesture-guide {
+    margin-top: 12px;
+  }
+}
+
+#meme {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#meme.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.meme-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 20px;
+  transition: opacity var(--transition);
+}
+
+.meme-placeholder.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.meme-placeholder-icon {
+  font-size: 2rem;
+  opacity: 0.3;
+}
+
+/* ---- gesture guide ---- */
+.gesture-guide {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  margin-top: 16px;
+}
+
+.gesture-guide h2 {
+  margin: 0 0 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+
+.gesture-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gesture-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.gesture-item.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.gesture-emoji {
+  font-size: 1.1rem;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.gesture-name {
+  font-weight: 500;
+}
+
+/* ---- loading overlay ---- */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--bg);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  z-index: 100;
+  transition: opacity 0.5s ease;
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- pulse animation when gesture detected ---- */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  50% { box-shadow: 0 0 20px 4px var(--accent-glow); }
+}
+
+.stage.active {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@media (max-width: 400px) {
+  body {
+    padding: 12px 8px;
+  }
+
+  .gesture-item {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+  }
 }
